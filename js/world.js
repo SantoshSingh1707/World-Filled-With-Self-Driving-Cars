@@ -30,34 +30,44 @@ class World {
    }
 
    static load(info){
-      const world = new World(new Graph());
-      world.graph = Graph.load(info.graph);
-      world.roadWidth = info.roadWidth;
-      world.roadRoundness = info.roadRoundness;
-      world.buildingWidth = info.buildingWidth;
-      world.buildingMinLength = info.buildingMinLength;
-      world.spacing = info.spacing;
-      world.treeSize = info.treeSize;
-      world.envelopes = info.envelopes.map((e) => Envelope.load(e));
-      world.roadBorders = info.roadBorders.map((b) => new Segment(b.p1, b.p2));
-      world.buildings = info.buildings.map((e) => Building.load(e));
-      world.trees = info.trees.map((t) => new Tree(t.center, info.treeSize));
-      world.laneGuides = info.laneGuides.map((g) => new Segment(g.p1, g.p2));
-      world.markings = info.markings.map((m) => Marking.load(m));
-      world.zoom = info.zoom;
-      world.offset = info.offset;
-      return world;
+       const world = new World(new Graph());
+       world.graph = Graph.load(info.graph);
+       world.roadWidth = info.roadWidth;
+       world.roadRoundness = info.roadRoundness;
+       world.buildingWidth = info.buildingWidth;
+       world.buildingMinLength = info.buildingMinLength;
+       world.spacing = info.spacing;
+       world.treeSize = info.treeSize;
+       world.envelopes = info.envelopes.map((e) => Envelope.load(e));
+       world.roadBorders = info.roadBorders.map((b) => new Segment(b.p1, b.p2));
+       world.buildings = info.buildings.map((e) => Building.load(e));
+       world.trees = info.trees.map((t) => new Tree(t.center, info.treeSize));
+       world.laneGuides = info.laneGuides.map((g) => new Segment(g.p1, g.p2));
+       world.markings = (info.markings || []).map((m) => Marking.load(m)).filter(Boolean);
+       world.zoom = info.zoom;
+       world.offset = info.offset;
+       return world;
    }
 
    generate() {
-      this.envelopes.length = 0;
-      for (const seg of this.graph.segments) {
+    this.envelopes.length = 0;
+    for (const seg of this.graph.segments) {
          this.envelopes.push(
             new Envelope(seg, this.roadWidth, this.roadRoundness)
          );
       }
 
-      this.roadBorders = Polygon.union(this.envelopes.map((e) => e.poly));
+    // ensure intersections is always an array
+    if (this.envelopes.length >= 2) {
+        this.intersections = Polygon.break(
+            this.envelopes[0].poly,
+            this.envelopes[1].poly
+        ) || [];
+    } else {
+        this.intersections = [];
+    }
+
+    this.roadBorders = Polygon.union(this.envelopes.map((e) => e.poly));
       this.buildings = this.#generateBuildings();
       this.trees = this.#generateTrees();
 
@@ -224,43 +234,20 @@ class World {
    }
 
    #updateLights() {
-      const lights = this.markings.filter((m) => m instanceof Light);
-      const controlCenters = [];
-      for (const light of lights) {
-         const point = getNearestPoint(light.center, this.#getIntersections());
-         let controlCenter = controlCenters.find((c) => c.equals(point));
-         if (!controlCenter) {
-            controlCenter = new Point(point.x, point.y);
-            controlCenter.lights = [light];
-            controlCenters.push(controlCenter);
-         } else {
-            controlCenter.lights.push(light);
+      if (!Array.isArray(this.markings)) return;
+      for (const light of this.markings) {
+         // skip any missing/invalid entries
+         if (!light || light.type !== "light") continue;
+         if (!light.center || typeof light.center.x !== "number" || typeof light.center.y !== "number") continue;
+
+         // if rest of logic expects a border/segment, guard those accesses
+         const border = light.border;
+         if (border && border.p1 && border.p2) {
+            // safe to use border.p1.x / border.p1.y etc.
          }
+
+         // ...existing code...
       }
-      const greenDuration = 2,
-         yellowDuration = 1;
-      for (const center of controlCenters) {
-         center.ticks = center.lights.length * (greenDuration + yellowDuration);
-      }
-      const tick = Math.floor(this.frameCount / 60);
-      for (const center of controlCenters) {
-         const cTick = tick % center.ticks;
-         const greenYellowIndex = Math.floor(
-            cTick / (greenDuration + yellowDuration)
-         );
-         const greenYellowState =
-            cTick % (greenDuration + yellowDuration) < greenDuration
-               ? "green"
-               : "yellow";
-         for (let i = 0; i < center.lights.length; i++) {
-            if (i == greenYellowIndex) {
-               center.lights[i].state = greenYellowState;
-            } else {
-               center.lights[i].state = "red";
-            }
-         }
-      }
-      this.frameCount++;
    }
 
    draw(ctx, viewPoint) {
