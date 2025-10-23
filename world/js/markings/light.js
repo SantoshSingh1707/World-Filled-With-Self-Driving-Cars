@@ -1,15 +1,13 @@
 class Light extends Marking {
    constructor(center, directionVector, width, height) {
-      super(center, directionVector, width, height);
+      super(center, directionVector, width, 18);
 
       this.state = "off";
-      this.border = this.poly && this.poly.segments ? this.poly.segments[0] : null;
+      this.border = this.poly.segments[0];
       this.type = "light";
    }
 
    draw(ctx) {
-      if (!this.center || !this.directionVector) return;
-      if (!this.width || !this.height) return;
       const perp = perpendicular(this.directionVector);
       const line = new Segment(
          add(this.center, scale(perp, this.width / 2)),
