@@ -19,15 +19,19 @@ class Controls{
         document.onkeydown=(event)=>{
             switch(event.key){
                 case "ArrowLeft":
+                    event.preventDefault();
                     this.left=true;
                     break;
                 case "ArrowRight":
+                    event.preventDefault();
                     this.right=true;
                     break;
                 case "ArrowUp":
+                    event.preventDefault();
                     this.forward=true;
                     break;
                 case "ArrowDown":
+                    event.preventDefault();
                     this.reverse=true;
                     break;
             }
@@ -35,15 +39,19 @@ class Controls{
         document.onkeyup=(event)=>{
             switch(event.key){
                 case "ArrowLeft":
+                    event.preventDefault();
                     this.left=false;
                     break;
                 case "ArrowRight":
+                    event.preventDefault();
                     this.right=false;
                     break;
                 case "ArrowUp":
+                    event.preventDefault();
                     this.forward=false;
                     break;
                 case "ArrowDown":
+                    event.preventDefault();
                     this.reverse=false;
                     break;
             }

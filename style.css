@@ -1,34 +1,494 @@
-body{
-    margin:0;
-    background:darkgray;
-    overflow:hidden;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+/* Modern UI Styles for Self-Driving Car Simulator */
+
+* {
+    box-sizing: border-box;
 }
 
-#verticalButtons{
-    display:flex;
-    flex-direction:column;
+body {
+    margin: 0;
+    padding: 0;
+    background: #1a1a2e;
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    height: 100vh;
 }
 
-button{
+#mainContainer {
+    display: flex;
+    height: 100vh;
+    gap: 10px;
+    padding: 10px;
+}
+
+/* Sidebars */
+#leftSidebar, #rightSidebar {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#leftSidebar::-webkit-scrollbar, #rightSidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+#leftSidebar::-webkit-scrollbar-track, #rightSidebar::-webkit-scrollbar-track {
+    background: #0f0f1e;
+    border-radius: 3px;
+}
+
+#leftSidebar::-webkit-scrollbar-thumb, #rightSidebar::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+}
+
+#leftSidebar::-webkit-scrollbar-thumb:hover, #rightSidebar::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Canvas Container */
+#canvasContainer {
+    flex: 1;
+    position: relative;
+    background: #2a5;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+#carCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+#statusBar {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 15px;
+    border-radius: 0 0 8px 8px;
+    margin: 0 auto;
+    display: inline-block;
+    backdrop-filter: blur(5px);
+}
+
+#statusText {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Panels */
+.panel {
+    background: #16213e;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    border: 1px solid #2a3a5e;
+}
+
+.panel h3 {
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #2a3a5e;
+    color: #4a9eff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Buttons */
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    flex: 1;
+    padding: 10px 15px;
     border: none;
-    border-radius: 5px;
-    padding: 5px 5px 7px 5px;
-    margin: 2px;
-    cursor:pointer;
-}
-button:hover{
-    background:blue;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: white;
+    min-width: 100px;
 }
 
-#miniMapCanvas{
-    background:black;
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
-#networkCanvas{
-    background:black;
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
-#carCanvas{
-    background:#2a5;
+
+.btn-secondary {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(250, 112, 154, 0.4);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+}
+
+.btn-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(48, 207, 208, 0.4);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: auto;
+}
+
+/* Control Groups */
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #ccc;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #2a3a5e;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.speed-buttons {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+}
+
+/* Statistics */
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #2a3a5e;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: #aaa;
+    font-size: 13px;
+}
+
+.stat-value {
+    color: #4a9eff;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Progress Bar */
+.progress-container {
+    margin-top: 10px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #2a3a5e;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.progress-text {
+    text-align: center;
+    color: #ccc;
+    font-size: 12px;
+}
+
+/* Fitness Chart */
+.fitness-history {
+    margin-top: 15px;
+    height: 100px;
+    background: #0f0f1e;
+    border-radius: 6px;
+    padding: 5px;
+}
+
+#fitnessChart {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Info Items */
+.info-item {
+    padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #2a3a5e;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    color: #aaa;
+}
+
+/* Canvas Styling */
+#networkCanvas {
+    width: 100%;
+    background: #0f0f1e;
+    border-radius: 6px;
+    display: block;
+}
+
+#miniMapCanvas {
+    width: 100%;
+    background: #0f0f1e;
+    border-radius: 6px;
+    display: block;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #16213e;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2a3a5e;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 2px solid #2a3a5e;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #4a9eff;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.close-btn:hover {
+    background: #2a3a5e;
+    color: #fff;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.setting-group {
+    margin-bottom: 20px;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.setting-group input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    background: #0f0f1e;
+    border: 1px solid #2a3a5e;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.setting-group input[type="number"]:focus {
+    outline: none;
+    border-color: #4a9eff;
+}
+
+.setting-group small {
+    display: block;
+    margin-top: 5px;
+    color: #777;
+    font-size: 12px;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 2px solid #2a3a5e;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+    #leftSidebar, #rightSidebar {
+        width: 250px;
+    }
+}
+
+@media (max-width: 1200px) {
+    #mainContainer {
+        flex-direction: column;
+    }
+    
+    #leftSidebar, #rightSidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    
+    .panel {
+        min-width: 250px;
+    }
+}
+
+/* Animation */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.paused .progress-fill {
+    animation: pulse 2s infinite;
+}
+
+/* Scrollbar Styling for Modal */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #0f0f1e;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #777;
 }

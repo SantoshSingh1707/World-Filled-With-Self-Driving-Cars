@@ -1,9 +1,14 @@
+/**
+ * Sensor system that casts rays to detect obstacles and road boundaries
+ * Used as input for the neural network
+ */
 class Sensor{
     constructor(car){
         this.car=car;
-        this.rayCount=5;
-        this.rayLength=150;
-        this.raySpread=Math.PI/2;
+        // Use config values if available, otherwise defaults
+        this.rayCount = typeof CONFIG !== 'undefined' ? CONFIG.SENSOR_RAY_COUNT : 5;
+        this.rayLength = typeof CONFIG !== 'undefined' ? CONFIG.SENSOR_RAY_LENGTH : 150;
+        this.raySpread = typeof CONFIG !== 'undefined' ? CONFIG.SENSOR_RAY_SPREAD : Math.PI/2;
 
         this.rays=[];
         this.readings=[];
@@ -23,9 +28,18 @@ class Sensor{
         }
     }
 
+    /**
+     * Gets the closest intersection point for a sensor ray
+     * Checks both road borders and traffic cars
+     * @param {Array} ray - [start, end] points of the ray
+     * @param {Array} roadBorders - Road boundary segments
+     * @param {Array} traffic - Traffic car objects
+     * @returns {Object|null} Intersection point with offset, or null if no intersection
+     */
     #getReading(ray,roadBorders,traffic){
         let touches=[];
 
+        // Check intersections with road borders
         for(let i=0;i<roadBorders.length;i++){
             const touch=getIntersection(
                 ray[0],
@@ -38,8 +52,10 @@ class Sensor{
             }
         }
 
+        // Check intersections with traffic cars
         for(let i=0;i<traffic.length;i++){
-            const poly=traffic[i].polygon;
+            const poly = traffic[i] && traffic[i].polygon;
+            if(!poly || !poly.length) continue;
             for(let j=0;j<poly.length;j++){
                 const value=getIntersection(
                     ray[0],
@@ -53,6 +69,7 @@ class Sensor{
             }
         }
 
+        // Return closest intersection (smallest offset)
         if(touches.length==0){
             return null;
         }else{
@@ -62,9 +79,14 @@ class Sensor{
         }
     }
 
+    /**
+     * Casts sensor rays in an arc from the car
+     * Rays are evenly distributed across the ray spread angle
+     */
     #castRays(){
         this.rays=[];
         for(let i=0;i<this.rayCount;i++){
+            // Calculate ray angle evenly distributed across spread
             const rayAngle=lerp(
                 this.raySpread/2,
                 -this.raySpread/2,
@@ -83,37 +105,49 @@ class Sensor{
     }
 
     draw(ctx){
+        const color = this.car && this.car.color ? this.car.color : '#4a9eff';
+        // Only render if there's at least one hit
+        const hasHit = this.readings && this.readings.some(r => !!r);
+        if (!hasHit) return;
         for(let i=0;i<this.rayCount;i++){
-            let end=this.rays[i][1];
-            if(this.readings[i]){
-                end=this.readings[i];
-            }
+            const start = this.rays[i][0];
+            const hit = this.readings[i];
+            if (!hit) continue; // draw only rays that collided with something
+            const end = hit;
 
+            // main colored ray
+            ctx.save();
+            ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.lineWidth=2;
-            ctx.strokeStyle="yellow";
-            ctx.moveTo(
-                this.rays[i][0].x,
-                this.rays[i][0].y
-            );
-            ctx.lineTo(
-                end.x,
-                end.y
-            );
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = color;
+            ctx.globalAlpha = 0.9;
+            ctx.moveTo(start.x, start.y);
+            ctx.lineTo(end.x, end.y);
             ctx.stroke();
+            ctx.restore();
 
+            // start circle
+            ctx.save();
             ctx.beginPath();
-            ctx.lineWidth=2;
-            ctx.strokeStyle="black";
-            ctx.moveTo(
-                this.rays[i][1].x,
-                this.rays[i][1].y
-            );
-            ctx.lineTo(
-                end.x,
-                end.y
-            );
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = color;
+            ctx.fillStyle = '#ffffff';
+            ctx.arc(start.x, start.y, 3, 0, Math.PI*2);
+            ctx.fill();
             ctx.stroke();
+            ctx.restore();
+
+            // end marker circle
+            ctx.save();
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = color;
+            ctx.fillStyle = '#ffffff';
+            ctx.arc(end.x, end.y, 3, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
         }
     }        
 }

@@ -1,19 +1,307 @@
 <!DOCTYPE html>
-<head>
-    <title>Self-driving car - No libraries</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <canvas id="carCanvas"></canvas>
-    <div id="verticalButtons">
-        <button onclick="save()">💾</button>
-        <button onclick="discard()">🗑️</button>
-    </div>
-    <div>
-      <canvas id="networkCanvas"></canvas>
-      <canvas id="miniMapCanvas"></canvas>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Self-Driving Car Evolution Simulator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Main Layout -->
+    <div id="mainContainer">
+      <!-- Left Sidebar -->
+      <div id="leftSidebar">
+        <!-- Control Panel -->
+        <div class="panel">
+          <h3>Controls</h3>
+          <div class="button-group">
+            <button
+              id="pauseBtn"
+              class="btn btn-primary"
+              onclick="togglePause()"
+            >
+              <span id="pauseIcon">⏸️</span> <span id="pauseText">Pause</span>
+            </button>
+            <button
+              id="resetBtn"
+              class="btn btn-secondary"
+              onclick="resetGeneration()"
+            >
+              🔄 Reset
+            </button>
+          </div>
+
+          <div class="control-group">
+            <label for="speedSlider"
+              >Speed: <span id="speedValue">1x</span></label
+            >
+            <input
+              type="range"
+              id="speedSlider"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value="1"
+              oninput="setSpeed(this.value)"
+            />
+            <div class="speed-buttons">
+              <button onclick="setSpeed(0.5)" class="btn-small">0.5x</button>
+              <button onclick="setSpeed(1)" class="btn-small">1x</button>
+              <button onclick="setSpeed(2)" class="btn-small">2x</button>
+              <button onclick="setSpeed(5)" class="btn-small">5x</button>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-success" onclick="save()">
+              💾 Save Brain
+            </button>
+            <button class="btn btn-warning" onclick="discard()">
+              🗑️ Discard
+            </button>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-secondary" onclick="toggleDriveMode()">
+              🔁 Toggle AI/Manual
+            </button>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-info" onclick="exportBrain()">
+              📥 Export
+            </button>
+            <button class="btn btn-info" onclick="importBrain()">
+              📤 Import
+            </button>
+            <button class="btn btn-info" onclick="exportAggregateBrains()">
+              📦 Export All
+            </button>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-success" onclick="selectBestBrainFile()">
+              📁 Select Best Brain File
+            </button>
+            <button class="btn btn-secondary" onclick="loadBestBrainFromFile()">
+              📄 Load Best Brain File
+            </button>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-secondary" onclick="toggleSettings()">
+              ⚙️ Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div class="panel">
+          <h3>Statistics</h3>
+          <div class="stat-item">
+            <span class="stat-label">Generation:</span>
+            <span class="stat-value" id="genDisplay">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Best Fitness:</span>
+            <span class="stat-value" id="bestFitnessDisplay">0.00</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Avg Fitness:</span>
+            <span class="stat-value" id="avgFitnessDisplay">0.00</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Active Cars:</span>
+            <span class="stat-value" id="activeCarsDisplay">0</span>
+          </div>
+          <div class="stat-item">
+            <!-- Time Left removed -->
+            <!-- <span class="stat-label">Time Left:</span>
+            <span class="stat-value" id="timeLeftDisplay">30.0s</span> -->
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Time:</span>
+            <span class="stat-value" id="totalTimeDisplay">0.0s</span>
+          </div>
+        </div>
+
+        <!-- Progress Panel -->
+        <div class="panel">
+          <h3>Evolution Progress</h3>
+          <!-- Progress bar removed; only fitness history shown -->
+          <div class="fitness-history">
+            <canvas id="fitnessChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Main Canvas -->
+      <div id="canvasContainer">
+        <canvas id="carCanvas"></canvas>
+        <div id="overlay">
+          <div id="statusBar">
+            <span id="statusText">Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div id="rightSidebar">
+        <!-- Neural Network Visualization -->
+        <div class="panel">
+          <h3>Neural Network</h3>
+          <canvas id="networkCanvas"></canvas>
+        </div>
+
+        <!-- Mini Map -->
+        <div class="panel">
+          <h3>Mini Map</h3>
+          <canvas id="miniMapCanvas"></canvas>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="panel">
+          <h3>Information</h3>
+          <div class="info-item">
+            <strong>Population:</strong> <span id="popSizeDisplay">125</span>
+          </div>
+          <div class="info-item">
+            <strong>Mutation Rate:</strong> <span id="mutRateDisplay">10%</span>
+          </div>
+          <div class="info-item">
+            <strong>Sensor Rays:</strong> <span id="sensorRaysDisplay">5</span>
+          </div>
+          <div class="info-item">
+            <strong>Network:</strong> <span id="networkSizeDisplay">5-6-4</span>
+          </div>
+          <div class="info-item">
+            <strong>Saved Gen:</strong> <span id="savedGenDisplay">-</span>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button class="close-btn" onclick="toggleSettings()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="setting-group">
+            <label>Population Size:</label>
+            <input
+              type="number"
+              id="settingPopSize"
+              min="10"
+              max="500"
+              step="5"
+            />
+            <small>Number of cars per generation</small>
+          </div>
+          <div class="setting-group">
+            <label>Traffic Count:</label>
+            <input
+              type="number"
+              id="settingTrafficCount"
+              min="0"
+              max="200"
+              step="1"
+            />
+            <small>Number of AI traffic cars</small>
+          </div>
+          <div class="setting-group">
+            <label>Mutation Rate:</label>
+            <input
+              type="number"
+              id="settingMutRate"
+              min="0"
+              max="1"
+              step="0.01"
+            />
+            <small>0.0 (no mutation) to 1.0 (high mutation)</small>
+          </div>
+          <div class="setting-group">
+            <label>Elitism Count:</label>
+            <input
+              type="number"
+              id="settingElitism"
+              min="0"
+              max="50"
+              step="1"
+            />
+            <small>Number of best cars to preserve</small>
+          </div>
+          <div class="setting-group">
+            <label>Generation Duration (seconds):</label>
+            <input
+              type="number"
+              id="settingGenDuration"
+              min="5"
+              max="120"
+              step="5"
+            />
+            <small>Time per generation</small>
+          </div>
+          <div class="setting-group">
+            <label>Max Speed:</label>
+            <input
+              type="number"
+              id="settingMaxSpeed"
+              min="1"
+              max="10"
+              step="0.5"
+            />
+            <small>Maximum car speed</small>
+          </div>
+          <div class="setting-group">
+            <label>Traffic Max Speed:</label>
+            <input
+              type="number"
+              id="settingTrafficSpeed"
+              min="0.5"
+              max="10"
+              step="0.5"
+            />
+            <small>Maximum speed for traffic cars</small>
+          </div>
+          <div class="setting-group">
+            <label>Sensor Ray Count:</label>
+            <input
+              type="number"
+              id="settingRayCount"
+              min="3"
+              max="15"
+              step="1"
+            />
+            <small>Number of sensor rays (requires reset)</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="applySettings()">
+            Apply
+          </button>
+          <button class="btn btn-secondary" onclick="resetSettings()">
+            Reset to Default
+          </button>
+          <button class="btn btn-secondary" onclick="toggleSettings()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input
+      type="file"
+      id="importFile"
+      accept=".json"
+      style="display: none"
+      onchange="handleFileImport(event)"
+    />
+
+    <!-- Scripts -->
     <script src="world/js/world.js"></script>
     <script src="world/js/viewport.js"></script>
     <script src="world/js/markings/marking.js"></script>
@@ -44,6 +332,8 @@
 
     <script src="world/saves/big.world"></script>
 
+    <script src="config.js"></script>
+    <script src="ui.js"></script>
     <script src="miniMap.js"></script>
     <script src="visualizer.js"></script>
     <script src="network.js"></script>
@@ -52,5 +342,5 @@
     <script src="controls.js"></script>
     <script src="car.js"></script>
     <script src="main.js"></script>
-</body>
+  </body>
 </html>
